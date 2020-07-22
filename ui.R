@@ -15,20 +15,15 @@ ui <- dashboardPage(
   ,
   dashboardBody(
     tabItems(
-      tabItem(tabName = "intro",
-              h2("Introduction")
+      tabItem(tabName = "intro", h2("Introduction")
       ),
-      tabItem(tabName = "explore",
-              h2("Data Exploration")
+      tabItem(tabName = "explore",h2("Data Exploration")
       ),
-      tabItem(tabName = "pca",
-              h2("PCA Analysis")
+      tabItem(tabName = "pca",h2("PCA Analysis")
       ),
-      tabItem(tabName = "model",
-              h2("Modeling")
+      tabItem(tabName = "model",h2("Modeling")
       ),
-      tabItem(tabName = "data",
-              h2("More On Data")
+      tabItem(tabName = "data",h2("More On Data")
       )
     )
   )
