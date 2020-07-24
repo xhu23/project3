@@ -1,14 +1,12 @@
 
 
 # library(rtweet)
-# rt <- search_tweets(
-#   "#Covid_19", n = 500, include_rts = FALSE
-# )
+# rt <- search_tweets("#Covid_19", n = 500, include_rts = FALSE)
 # tmls <- get_timelines(c("cnn", "BBCWorld", "foxnews","msnbc"), n = 5000)
 
 
 
-server <- function(input, output) {
+server <- function(input, output,session) {
   output$introtext1 <- renderUI({
     str1 <- h2("Data Description")
     str2 <- h4("The R package rtweet have built-in functionality to scrape data from twitter.
@@ -51,6 +49,10 @@ server <- function(input, output) {
                section gives users an option to scroll through the data with their desired filters.")
     HTML(paste(str1, str2,sep = '<br/>'))
   })
+  observeEvent(
+    var <- dplyr::select(tmls,input$numvarselect),
+    output$simplestatistics <- renderPrint(summary(var))
+  )
 }
 
 

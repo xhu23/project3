@@ -32,7 +32,32 @@ ui <- dashboardPage(
                 )
               )
       ),
-      tabItem(tabName = "explore",h2("Data Exploration")
+      tabItem(tabName = "explore",h2("Data Exploration"),
+              fluidRow(
+                box(
+                  selectInput("mediapick","Select Source Media", c(CNN="cnn", BBC="BBCWorld", FOX="foxnews",MSNBC="msnbc")),
+                  selectInput("vartype", "Please Select Variable Type of Interest",
+                              c(Binary = "bin", Numeric = "num", Character="char")),
+                  conditionalPanel(
+                    condition = "input.vartype == 'num'",
+                    selectInput("numvarselect", h3("Select NUMERIC Variable"),
+                              c("display_text_width","favorite_count","retweet_count"))
+                  ),
+                  conditionalPanel(
+                    condition = "input.vartype == 'bin'",
+                    selectInput("binvarselect", h3("Select BINARY Variable"),
+                              c("is_quote","is_retweet"))
+                  ),
+                  conditionalPanel(
+                    condition = "input.vartype == 'char'",
+                    selectInput("charvarselect", h3("Select CHARACTER Variable"),
+                              c("text","source"))
+                  )
+                ),
+                box(
+                  textOutput$simplestatistics
+                )
+              )
       ),
       tabItem(tabName = "pca",h2("PCA Analysis")
       ),
@@ -43,3 +68,4 @@ ui <- dashboardPage(
     )
   )
 )
+
