@@ -1,11 +1,10 @@
+library(rtweet)
+# # # # rt <- search_tweets("#Covid_19", n = 500, include_rts = FALSE)
+tmls <- get_timelines(c("cnn", "BBCWorld", "foxnews","msnbc"), n = 100)
 
 
-# library(rtweet)
-# rt <- search_tweets("#Covid_19", n = 500, include_rts = FALSE)
-# tmls <- get_timelines(c("cnn", "BBCWorld", "foxnews","msnbc"), n = 5000)
-
-
-
+library(dplyr)
+library(tidyverse)
 server <- function(input, output,session) {
   output$introtext1 <- renderUI({
     str1 <- h2("Data Description")
@@ -49,10 +48,27 @@ server <- function(input, output,session) {
                section gives users an option to scroll through the data with their desired filters.")
     HTML(paste(str1, str2,sep = '<br/>'))
   })
-  observeEvent(
-    var <- dplyr::select(tmls,input$numvarselect),
-    output$simplestatistics <- renderPrint(summary(var))
+  output$simplestatistics <- renderUI(
+    h2(HTML(paste("Simple Summary Statistics about: ",input$numvarselect)))
+  )
+  output$stats_cnn <- renderUI(
+    h3(paste("CNN: ",HTML(summary(tmls %>% select(input$numvarselect) %>% subset(screen_name="cnn")))))
+  )
+  output$stats_bbc <- renderUI(
+    h3(paste("BBCWorld: ",HTML(summary(tmls %>% select(input$numvarselect) %>% subset(screen_name="BBCWorld")))))
+  )
+  output$stats_fox <- renderUI(
+    h3(paste("Foxnews: ",HTML(summary(tmls %>% select(input$numvarselect) %>% subset(screen_name="foxnews")))))
+  )
+  output$stats_msnbc <- renderUI(
+    h3(paste("MSNBC: ",HTML(summary(tmls %>% select(input$numvarselect) %>% subset(screen_name="msnbc")))))
+  )
+  output$stats_hist <- renderPlot(
+    tmls$screen_name <- as.factor(tmls$screen_name)
+    tmls %>% ggplot()
   )
 }
 
+# c(CNN="cnn", BBC="BBCWorld", FOX="foxnews",MSNBC="msnbc",All="all")
 
+              

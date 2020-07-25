@@ -35,9 +35,9 @@ ui <- dashboardPage(
       tabItem(tabName = "explore",h2("Data Exploration"),
               fluidRow(
                 box(
-                  selectInput("mediapick","Select Source Media", c(CNN="cnn", BBC="BBCWorld", FOX="foxnews",MSNBC="msnbc")),
+                  # selectInput("mediapick","Select Source Media", c(CNN="cnn", BBC="BBCWorld", FOX="foxnews",MSNBC="msnbc",All="all")),
                   selectInput("vartype", "Please Select Variable Type of Interest",
-                              c(Binary = "bin", Numeric = "num", Character="char")),
+                              c(Numeric = "num", Binary = "bin",Character="char")),
                   conditionalPanel(
                     condition = "input.vartype == 'num'",
                     selectInput("numvarselect", h3("Select NUMERIC Variable"),
@@ -55,7 +55,11 @@ ui <- dashboardPage(
                   )
                 ),
                 box(
-                  textOutput$simplestatistics
+                  uiOutput("simplestatistics"),
+                  uiOutput("stats_cnn"),
+                  uiOutput("stats_bbc"),
+                  uiOutput("stats_fox"),
+                  uiOutput("stats_msnbc")
                 )
               )
       ),
