@@ -1,7 +1,7 @@
 library(rtweet)
 # # # # rt <- search_tweets("#Covid_19", n = 500, include_rts = FALSE)
-tmls <- get_timelines(c("cnn", "BBCWorld", "foxnews","msnbc"), n = 100)
-
+tmls <- get_timelines(c("cnn", "BBCWorld", "cnbc","msnbc"), n = 50)
+library(ggplot2)
 
 library(dplyr)
 library(tidyverse)
@@ -48,25 +48,33 @@ server <- function(input, output,session) {
                section gives users an option to scroll through the data with their desired filters.")
     HTML(paste(str1, str2,sep = '<br/>'))
   })
-  output$simplestatistics <- renderUI(
-    h2(HTML(paste("Simple Summary Statistics about: ",input$numvarselect)))
-  )
-  output$stats_cnn <- renderUI(
-    h3(paste("CNN: ",HTML(summary(tmls %>% select(input$numvarselect) %>% subset(screen_name="cnn")))))
-  )
-  output$stats_bbc <- renderUI(
-    h3(paste("BBCWorld: ",HTML(summary(tmls %>% select(input$numvarselect) %>% subset(screen_name="BBCWorld")))))
-  )
-  output$stats_fox <- renderUI(
-    h3(paste("Foxnews: ",HTML(summary(tmls %>% select(input$numvarselect) %>% subset(screen_name="foxnews")))))
-  )
-  output$stats_msnbc <- renderUI(
-    h3(paste("MSNBC: ",HTML(summary(tmls %>% select(input$numvarselect) %>% subset(screen_name="msnbc")))))
-  )
-  output$stats_hist <- renderPlot(
-    tmls$screen_name <- as.factor(tmls$screen_name)
-    tmls %>% ggplot()
-  )
+  output$simplestatistics <- renderUI({
+    str0 <- h3(paste("Simple Summary Statistics about: ",input$numvarselect))
+    str1_1 <- h4("CNN")
+    str1_2 <- h4(toString(summary(tmls %>% select(input$numvarselect) %>% subset(screen_name="cnn"))))
+    str2_1 <- h4("BBC World")
+    str2_2 <- h4(toString(summary(tmls %>% select(input$numvarselect) %>% subset(screen_name="BBCWorld"))))
+    str3_1 <- h4("CNBC")
+    str3_2 <- h4(toString(summary(tmls %>% select(input$numvarselect) %>% subset(screen_name="cnbc"))))
+    str4_1 <- h4("MSNBC")
+    str4_2 <- h4(toString(summary(tmls %>% select(input$numvarselect) %>% subset(screen_name="msnbc"))))
+    HTML(paste(str0, str1_1, str1_2, str2_1, str2_2, str3_1, str3_2, str4_1, str4_2, sep = '<br/>'))
+   })
+  output$stats_hist <- renderPlot({
+    plot <- tmls %>% ggplot(aes(x=tmls[[input$numvarselect]]))
+    plot + geom_histogram() +
+      xlab(input$numvarselect)+
+      facet_wrap(~screen_name)
+   })
+  # output$binary_grap <- renderPlot({
+  #   plot <- tmls %>% ggplot(aes(x=tmls[[input$binvarselect]]))
+  #   plot + geom_histogram() +
+  #     xlab(input$numvarselect)+
+  #     facet_wrap(~screen_name)
+  #   
+  #   
+  # })
+  
 }
 
 # c(CNN="cnn", BBC="BBCWorld", FOX="foxnews",MSNBC="msnbc",All="all")

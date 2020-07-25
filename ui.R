@@ -55,11 +55,11 @@ ui <- dashboardPage(
                   )
                 ),
                 box(
+                  conditionalPanel(
+                  condition = "input.vartype == 'num'",
                   uiOutput("simplestatistics"),
-                  uiOutput("stats_cnn"),
-                  uiOutput("stats_bbc"),
-                  uiOutput("stats_fox"),
-                  uiOutput("stats_msnbc")
+                  plotOutput("stats_hist")
+                  )
                 )
               )
       ),
