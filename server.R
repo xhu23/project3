@@ -3,8 +3,12 @@ library(rtweet)
 tmls <- get_timelines(c("cnn", "BBCWorld", "cnbc","msnbc"), n = 50)
 library(ggplot2)
 
+library(shiny)
 library(dplyr)
+library(stringr)
 library(tidyverse)
+library(plotly)
+
 server <- function(input, output,session) {
   output$introtext1 <- renderUI({
     str1 <- h2("Data Description")
@@ -51,29 +55,77 @@ server <- function(input, output,session) {
   output$simplestatistics <- renderUI({
     str0 <- h3(paste("Simple Summary Statistics about: ",input$numvarselect))
     str1_1 <- h4("CNN")
-    str1_2 <- h4(toString(summary(tmls %>% select(input$numvarselect) %>% subset(screen_name="cnn"))))
+    str1_2 <- h4(toString(summary(tmls %>% select(input$numvarselect) %>% subset(screen_name="CNN"))))
     str2_1 <- h4("BBC World")
     str2_2 <- h4(toString(summary(tmls %>% select(input$numvarselect) %>% subset(screen_name="BBCWorld"))))
     str3_1 <- h4("CNBC")
-    str3_2 <- h4(toString(summary(tmls %>% select(input$numvarselect) %>% subset(screen_name="cnbc"))))
+    str3_2 <- h4(toString(summary(tmls %>% select(input$numvarselect) %>% subset(screen_name="CNBC"))))
     str4_1 <- h4("MSNBC")
-    str4_2 <- h4(toString(summary(tmls %>% select(input$numvarselect) %>% subset(screen_name="msnbc"))))
+    str4_2 <- h4(toString(summary(tmls %>% select(input$numvarselect) %>% subset(screen_name="MSNBC"))))
     HTML(paste(str0, str1_1, str1_2, str2_1, str2_2, str3_1, str3_2, str4_1, str4_2, sep = '<br/>'))
    })
   output$stats_hist <- renderPlot({
-    plot <- tmls %>% ggplot(aes(x=tmls[[input$numvarselect]]))
+    plot <- tmls %>% ggplot(aes(x=.data[[input$numvarselect]]))
     plot + geom_histogram() +
       xlab(input$numvarselect)+
       facet_wrap(~screen_name)
    })
-  # output$binary_grap <- renderPlot({
-  #   plot <- tmls %>% ggplot(aes(x=tmls[[input$binvarselect]]))
-  #   plot + geom_histogram() +
-  #     xlab(input$numvarselect)+
-  #     facet_wrap(~screen_name)
-  #   
-  #   
-  # })
+  output$binary_grap <- renderPlot({
+    plot <- tmls %>% ggplot(aes(x=.data[[input$binvarselect]]))
+    plot + geom_bar( fill="steelblue") +
+      xlab(input$binvarselect)+ 
+      geom_text(aes(label=..count..,y=..count..+2),stat="count") + 
+      facet_wrap(~screen_name)
+
+  })
+  output$source_grap <- renderPlot({
+    plot <- tmls %>% ggplot(aes(x=.data[[input$charvarselect]]))
+    plot + geom_bar(fill="steelblue") +
+      xlab(input$charvarselect)+ 
+      geom_text(aes(label=..count..,y=..count..+2),stat="count") + 
+      facet_wrap(~screen_name)
+    
+  })
+  output$text_table <- renderTable({
+    content <- tmls %>% select(screen_name,text)
+    
+    cnn_text <-   content %>% subset(screen_name=="CNN") %>% slice_head(n=20)
+    bbc_text <-   content %>% subset(screen_name=="BBCWorld") %>% slice_head(n=20)
+    cnbc_text <-   content %>% subset(screen_name=="CNBC") %>% slice_head(n=20)
+    msnbc_text <-   content %>% subset(screen_name=="MSNBC") %>% slice_head(n=20)
+    
+    final2 <- final <- rbind(cnn_text,bbc_text,cnbc_text,msnbc_text)
+    final2$text <- paste(substr(final2$text,1,200),"...")
+    final2 
+  })
+  
+  output$downloadData <- downloadHandler(
+    filename = "TweetData.csv",
+    content = function(file) {
+      write.csv(final, file)
+    }
+  )
+  
+  x <- reactive({
+    tmls[,input$x_axis_select]
+  })
+  y <- reactive({
+    tmls[,input$y_axis_select]
+  })
+  output$plotly_plot <- renderPlotly({
+    fig <- plot_ly(tmls,
+            x = ~.data[[input$x_axis_select]],
+            y = ~.data[[input$y_axis_select]], 
+            type = 'scatter',
+            mode = 'markers')
+    fig <- fig %>% layout(
+      scene = list(
+        xaxis = list(title = "X-Axis"),
+        yaxis = list(title = "Y-Axis")
+      ))
+    fig
+    
+  })
   
 }
 

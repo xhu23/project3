@@ -8,6 +8,7 @@ ui <- dashboardPage(
     sidebarMenu(
       menuItem("Introduction", tabName = "intro", icon = icon("dashboard")),
       menuItem("Data Exploration", tabName = "explore", icon = icon("table")),
+      menuItem("Numeric Exploration", tabName = "explore_num", icon = icon("table")),
       menuItem("PCA Analysis", tabName = "pca", icon = icon("bar-chart-o")),
       menuItem("Modeling", tabName = "model", icon = icon("bar-chart-o")),
       menuItem("More On Data", tabName = "data", icon = icon("list-alt"))
@@ -46,7 +47,7 @@ ui <- dashboardPage(
                   conditionalPanel(
                     condition = "input.vartype == 'bin'",
                     selectInput("binvarselect", h3("Select BINARY Variable"),
-                              c("is_quote","is_retweet"))
+                              c("is_retweet","is_quote"))
                   ),
                   conditionalPanel(
                     condition = "input.vartype == 'char'",
@@ -56,13 +57,40 @@ ui <- dashboardPage(
                 ),
                 box(
                   conditionalPanel(
-                  condition = "input.vartype == 'num'",
-                  uiOutput("simplestatistics"),
-                  plotOutput("stats_hist")
+                    condition = "input.vartype == 'num'",
+                    uiOutput("simplestatistics"),
+                    plotOutput("stats_hist")
+                  ),
+                  conditionalPanel(
+                    condition = "input.vartype == 'bin'",
+                    plotOutput("binary_grap")
+                  ),
+                  conditionalPanel(
+                    condition = "input.vartype == 'char'",
+                    conditionalPanel(
+                      condition = "input.charvarselect == 'source'",
+                      plotOutput("source_grap")
+                    ),
+                    conditionalPanel(
+                      condition = "input.charvarselect == 'text'",
+                      tags$text(h3("Most Recent 20 Tweeter Text (Each Media)")),
+                      downloadLink("downloadData", h2("Download Table")),
+                      tableOutput("text_table")
+                    )
                   )
                 )
-              )
+                )
+              
       ),
+      tabItem(tabName = "explore_num",h2("Numeric Exploration"),
+        box(
+          tags$text(h3("Explore Relationship Between Numeric Varaibles")),
+          selectInput("x_axis_select", h3("Select X-Axis Variable"),c("display_text_width","favorite_count","retweet_count")),
+          selectInput("y_axis_select", h3("Select Y-Axis Variable"),c("display_text_width","favorite_count","retweet_count")),
+          plotlyOutput("plotly_plot")
+        )
+      ), 
+        
       tabItem(tabName = "pca",h2("PCA Analysis")
       ),
       tabItem(tabName = "model",h2("Modeling")
