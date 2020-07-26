@@ -98,7 +98,7 @@ server <- function(input, output,session) {
     cnbc_text <-   content %>% subset(screen_name=="CNBC") %>% slice_head(n=20)
     msnbc_text <-   content %>% subset(screen_name=="MSNBC") %>% slice_head(n=20)
     
-    final2 <- final <- rbind(cnn_text,bbc_text,cnbc_text,msnbc_text)
+    final2 <- rbind(cnn_text,bbc_text,cnbc_text,msnbc_text)
     final2$text <- paste(substr(final2$text,1,200),"...")
     final2 
   })
@@ -106,7 +106,7 @@ server <- function(input, output,session) {
   output$downloadData <- downloadHandler(
     filename = "TweetData.csv",
     content = function(file) {
-      write.csv(final, file)
+      write.csv(final2, file)
     }
   )
   output$plotly_plot <- renderPlotly({
@@ -159,10 +159,17 @@ server <- function(input, output,session) {
                  sample_n(input$treeobs) %>% 
                  select(screen_name, timing, display_text_width,retweet_count,favorite_count)
     rfTree <- randomForest(as.factor(screen_name) ~ ., data = treedata, mtry = input$vartry, ntree=input$treecount)
-    
+
     plot(rfTree, type="l",main = "Error Rate by Tree Count")
     legend("topright", legend=unique(treedata$screen_name), col=1:4, pch=19)
   })
+  output$treepred <- renderUI({
+    newdata <- data.frame(timing=input$treepred_timing, display_text_width=input$treepred_length,
+                          retweet_count=input$treepred_retweetcount,favorite_count=input$treepred_favocount)
+    pre_rfTree <- predict(rfTree, newdata)
+    as.character(pre_rfTree)
+  })
 }
 
-              
+
+            

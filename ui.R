@@ -11,7 +11,8 @@ ui <- dashboardPage(
       menuItem("Data Exploration", tabName = "explore", icon = icon("table")),
       menuItem("Numeric Exploration", tabName = "explore_num", icon = icon("table")),
       menuItem("PCA Analysis", tabName = "pca", icon = icon("bar-chart-o")),
-      menuItem("Modeling", tabName = "model", icon = icon("bar-chart-o")),
+      menuItem("Random Forest", tabName = "model1", icon = icon("bar-chart-o")),
+      menuItem("Logsitic Regression", tabName = "model2", icon = icon("bar-chart-o")),
       menuItem("More On Data", tabName = "data", icon = icon("list-alt"))
     )
   ),
@@ -105,10 +106,9 @@ ui <- dashboardPage(
               )
         
       ),
-      tabItem(tabName = "model",
-              div(HTML("<em><h2> Modeling</em>")),
+      tabItem(tabName = "model1",
+              div(HTML("<em><h2>Random Forest Model</em>")),
               fluidRow(
-                column(12,
                        box(
                          tags$text(h3("Random Forest Model")),
                          tags$text(h4("Response: Media")),
@@ -116,8 +116,28 @@ ui <- dashboardPage(
                          numericInput("treecount", h4("Select Number of Trees to Grow"), min = 1,max = 200, value = 5),
                          numericInput("vartry", h4("Select Number of Variables randomly tried at each node"), min = 1,max = 4, value = 1),
                          numericInput("treeobs", h4("Number of Tweets (each Media) for Random Forest"), min = 1,max = 200, value = 10),
-                         renderPlot("randomforest")
+                         plotOutput("randomforest")
+                       ),
+                       box(
+                         tags$text(h3("Dynamic Prediction")),
+                         numericInput("treepred_timing",h4("Input: Timing of the day (minutes)"), min=1, max=60*24, value=480),
+                         numericInput("treepred_length",h4("Input: Tweet Character Count"),min=1,max=400, value=120),
+                         numericInput("treepred_retweetcount",h4("Input: Retweet Count"),min=1,max=400, value=120),
+                         numericInput("treepred_favocount",h4("Input: Favorite Count"),min=1,max=400, value=120),
+                         tags$text(h4("Output: Most likely Media:")),
+                         uiOutput("treepred")
                        )
+              )
+      ),
+      tabItem(tabName = "model2",
+              div(HTML("<em><h2>Logistic Regression Model</em>")),
+              fluidRow(
+                box(
+                  
+                  
+                ),
+                box(
+                  
                 )
               )
       ),
