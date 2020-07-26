@@ -1,14 +1,18 @@
 library(rtweet)
-# # # # rt <- search_tweets("#Covid_19", n = 500, include_rts = FALSE)
-tmls <- get_timelines(c("cnn", "BBCWorld", "cnbc","msnbc"), n = 50)
+tmls <- get_timelines(c("cnn", "BBCWorld", "cnbc","msnbc"), n = 100)
 library(ggplot2)
-
 library(shiny)
 library(dplyr)
 library(stringr)
 # library(tidyverse)
 library(plotly)
+library(randomForest)
+# calcualte timing of tweet
+tmls["timing_hour"] <- substr(tmls$created_at,12,13)
+tmls["timing_min"] <- substr(tmls$created_at,15,16)
+tmls["timing"] <- apply(tmls,1,function(data){60*as.numeric(data$timing_hour)+as.numeric(data$timing_min)})
 
+# server file
 server <- function(input, output,session) {
   output$introtext1 <- renderUI({
     str1 <- h2("Data Description")
@@ -105,13 +109,6 @@ server <- function(input, output,session) {
       write.csv(final, file)
     }
   )
-  
-  # x <- reactive({
-  #   tmls[,input$x_axis_select]
-  # })
-  # y <- reactive({
-  #   tmls[,input$y_axis_select]
-  # })
   output$plotly_plot <- renderPlotly({
     fig <- plot_ly(tmls,
             x = ~.data[[input$x_axis_select]],
@@ -140,9 +137,32 @@ server <- function(input, output,session) {
       write.csv(subset_result, file)
     }
   )
-  
+  output$cluster_graph <- renderPlot({
+    data_clustering <-  tmls %>% 
+      group_by(screen_name) %>%
+      sample_n(input$obs)
+    
+      hierClust <- hclust(dist(data.frame(data_clustering$timing, data_clustering$display_text_width, data_clustering$retweet_count,data_clustering$favorite_count)),
+                          method=input$agglo)
+      plotresult <- plot(hierClust,xlab="")
+      plotresult
+  })
+  output$downloadPlot <- downloadHandler(
+    filename = function() { paste("Cluster Download.png") },
+    content = function(file) {
+      ggsave(file, plot= plotresult, device = "png")
+    }
+  )
+  output$randomforest <- renderPlot({
+    treedata <-  tmls %>% 
+                 group_by(screen_name) %>%
+                 sample_n(input$treeobs) %>% 
+                 select(screen_name, timing, display_text_width,retweet_count,favorite_count)
+    rfTree <- randomForest(as.factor(screen_name) ~ ., data = treedata, mtry = input$vartry, ntree=input$treecount)
+    
+    plot(rfTree, type="l",main = "Error Rate by Tree Count")
+    legend("topright", legend=unique(treedata$screen_name), col=1:4, pch=19)
+  })
 }
-
-# c(CNN="cnn", BBC="BBCWorld", FOX="foxnews",MSNBC="msnbc",All="all")
 
               

@@ -96,11 +96,30 @@ ui <- dashboardPage(
       ), 
         
       tabItem(tabName = "pca",
-              div(HTML("<em><h2> PCA Analysis</em>"))
+              div(HTML("<em><h2> PCA Analysis</em>")),
+              box(
+                selectInput("agglo", h3("Select Agglomeration Method"),c("ward.D", "ward.D2", "single", "complete", "average","mcquitty", "median", "centroid")),
+                numericInput("obs", h3("Number of Tweets (each Media) for Clustering"), min = 1,max = 100, value = 20),
+                downloadButton('downloadPlot',"Download Plot"),
+                plotOutput("cluster_graph")
+              )
         
       ),
       tabItem(tabName = "model",
-              div(HTML("<em><h2> Modeling</em>"))
+              div(HTML("<em><h2> Modeling</em>")),
+              fluidRow(
+                column(12,
+                       box(
+                         tags$text(h3("Random Forest Model")),
+                         tags$text(h4("Response: Media")),
+                         tags$text(h4("Predictor: Tweet Timing, Text Width, Retweet Count, Favorite_Count")),
+                         numericInput("treecount", h4("Select Number of Trees to Grow"), min = 1,max = 200, value = 5),
+                         numericInput("vartry", h4("Select Number of Variables randomly tried at each node"), min = 1,max = 4, value = 1),
+                         numericInput("treeobs", h4("Number of Tweets (each Media) for Random Forest"), min = 1,max = 200, value = 10),
+                         renderPlot("randomforest")
+                       )
+                )
+              )
       ),
       tabItem(tabName = "data",
               div(HTML("<em><h2>More On Data</em>")),
