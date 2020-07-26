@@ -6,7 +6,7 @@ library(ggplot2)
 library(shiny)
 library(dplyr)
 library(stringr)
-library(tidyverse)
+# library(tidyverse)
 library(plotly)
 
 server <- function(input, output,session) {
@@ -106,12 +106,12 @@ server <- function(input, output,session) {
     }
   )
   
-  x <- reactive({
-    tmls[,input$x_axis_select]
-  })
-  y <- reactive({
-    tmls[,input$y_axis_select]
-  })
+  # x <- reactive({
+  #   tmls[,input$x_axis_select]
+  # })
+  # y <- reactive({
+  #   tmls[,input$y_axis_select]
+  # })
   output$plotly_plot <- renderPlotly({
     fig <- plot_ly(tmls,
             x = ~.data[[input$x_axis_select]],
@@ -119,13 +119,27 @@ server <- function(input, output,session) {
             type = 'scatter',
             mode = 'markers')
     fig <- fig %>% layout(
-      scene = list(
         xaxis = list(title = "X-Axis"),
         yaxis = list(title = "Y-Axis")
-      ))
+      )
     fig
     
   })
+  
+  output$subset_table <- renderTable({
+    subset_result <- tmls %>%filter(source==input$source) %>% filter(screen_name==input$media) %>%
+      filter(is_retweet==input$isretw)%>% 
+      filter(favorite_count>= input$favcount)
+    subset_result <- subset_result[,c(4:7,12:14)]
+    subset_result
+  })
+  
+  output$download_media_data <- downloadHandler(
+    file = "Subset Media Tweet.csv",
+    content = function(file) {
+      write.csv(subset_result, file)
+    }
+  )
   
 }
 

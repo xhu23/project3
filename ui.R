@@ -1,6 +1,7 @@
 
 library(shinydashboard)
 library(shiny)
+library(plotly)
 ui <- dashboardPage(
   skin="red",
   dashboardHeader(title = "Baseball Analysis"),
@@ -16,7 +17,8 @@ ui <- dashboardPage(
   ),
   dashboardBody(
     tabItems(
-      tabItem(tabName = "intro", h2("Introduction"),
+      tabItem(tabName = "intro", 
+              div(HTML("<em><h2> Introduction</em>")),
               fluidRow(
                 column(12,
                 box(htmlOutput("introtext1"),background = "maroon",
@@ -33,7 +35,8 @@ ui <- dashboardPage(
                 )
               )
       ),
-      tabItem(tabName = "explore",h2("Data Exploration"),
+      tabItem(tabName = "explore",
+              div(HTML("<em><h2> Data Exploration</em>")),
               fluidRow(
                 box(
                   # selectInput("mediapick","Select Source Media", c(CNN="cnn", BBC="BBCWorld", FOX="foxnews",MSNBC="msnbc",All="all")),
@@ -82,20 +85,42 @@ ui <- dashboardPage(
                 )
               
       ),
-      tabItem(tabName = "explore_num",h2("Numeric Exploration"),
-        box(
-          tags$text(h3("Explore Relationship Between Numeric Varaibles")),
-          selectInput("x_axis_select", h3("Select X-Axis Variable"),c("display_text_width","favorite_count","retweet_count")),
-          selectInput("y_axis_select", h3("Select Y-Axis Variable"),c("display_text_width","favorite_count","retweet_count")),
-          plotlyOutput("plotly_plot")
-        )
+      tabItem(tabName = "explore_num",
+              div(HTML("<em><h2>Numeric Exploration</em>")),
+              box(
+                tags$text(h3("Explore Relationship Between Numeric Varaibles")),
+                selectInput("x_axis_select", h3("Select X-Axis Variable"),c("display_text_width","favorite_count","retweet_count")),
+                selectInput("y_axis_select", h3("Select Y-Axis Variable"),c("display_text_width","favorite_count","retweet_count")),
+                plotlyOutput("plotly_plot")
+              )
       ), 
         
-      tabItem(tabName = "pca",h2("PCA Analysis")
+      tabItem(tabName = "pca",
+              div(HTML("<em><h2> PCA Analysis</em>"))
+        
       ),
-      tabItem(tabName = "model",h2("Modeling")
+      tabItem(tabName = "model",
+              div(HTML("<em><h2> Modeling</em>"))
       ),
-      tabItem(tabName = "data",h2("More On Data")
+      tabItem(tabName = "data",
+              div(HTML("<em><h2>More On Data</em>")),
+              fluidRow(
+                column(12,
+                     box(
+                        tags$text(h3("Please Select Filters")),
+                        selectInput("source", h3("Source of Tweet"),c(unique(tmls$source))),
+                        selectInput("media", h3("Submission Media"),c(unique(tmls$screen_name))),
+                        selectInput("isretw", h3("Is is a retweet?"),c(unique(tmls$is_retweet))),
+                        numericInput("favcount", h3("Minimun Favoriate Count"), min = 1,max = 20000, value = 100),
+                      )
+                ),
+                column(12,
+                     box(
+                       downloadLink("download_media_data", h2("Download Table Below")),
+                       tableOutput("subset_table")
+                     )
+                )
+              )
       )
     )
   )
