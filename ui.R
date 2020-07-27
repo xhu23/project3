@@ -9,6 +9,7 @@ library(shiny)
 library(plotly)
 
 ui <- dashboardPage(
+  # define default choice for modeling
   skin="red",
   # assign dashboad header
   dashboardHeader(title = "Media Tweet Analysis"),
@@ -28,7 +29,6 @@ ui <- dashboardPage(
   
   # Set the body of dashboard
   dashboardBody(
-    
     tabItems(
       # The introduction page
       tabItem(tabName = "intro", 

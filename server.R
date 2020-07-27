@@ -16,7 +16,7 @@ library(mathjaxr)
 
 # server file
 server <- function(input, output,session) {
-  
+
   # Request data from tweeter
   tmls <- get_timelines(c("cnn", "BBCWorld", "cnbc","msnbc"), n = 100)
   # Calculate for addtional varaibles
@@ -26,7 +26,7 @@ server <- function(input, output,session) {
   tmls["Media_CNN"] <- ifelse(tmls$screen_name=="CNN",1,0)
   # define default choice for modeling
   model2_choice <- c("select all","timing", "display_text_width","retweet_count","favorite_count")
-  
+
   # Introduction Page, Box 1
   output$introtext1 <- renderUI({
     str1 <- h2("Data Description")
