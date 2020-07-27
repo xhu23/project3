@@ -18,7 +18,7 @@ library(mathjaxr)
 server <- function(input, output,session) {
 
   # Request data from tweeter
-  tmls <- get_timelines(c("cnn", "BBCWorld", "cnbc","msnbc"), n = 100)
+  tmls <- get_timelines(c("cnn", "BBCWorld", "cnbc","msnbc"), n = 400)
   # Calculate for addtional varaibles
   tmls["timing_hour"] <- substr(tmls$created_at,12,13)
   tmls["timing_min"] <- substr(tmls$created_at,15,16)
