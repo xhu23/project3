@@ -7,11 +7,13 @@ library(stringr)
 # library(tidyverse)
 library(plotly)
 library(randomForest)
+library(mathjaxr)
 # calcualte timing of tweet
 tmls["timing_hour"] <- substr(tmls$created_at,12,13)
 tmls["timing_min"] <- substr(tmls$created_at,15,16)
 tmls["timing"] <- apply(tmls,1,function(data){60*as.numeric(data$timing_hour)+as.numeric(data$timing_min)})
-
+model2_choice <- c("select all","timing", "display_text_width","retweet_count","favorite_count")
+tmls["Media_CNN"] <- ifelse(tmls$screen_name=="CNN",1,0)
 # server file
 server <- function(input, output,session) {
   output$introtext1 <- renderUI({
@@ -153,13 +155,15 @@ server <- function(input, output,session) {
       ggsave(file, plot= plotresult, device = "png")
     }
   )
-  output$randomforest <- renderPlot({
-    treedata <-  tmls %>% 
-                 group_by(screen_name) %>%
-                 sample_n(input$treeobs) %>% 
-                 select(screen_name, timing, display_text_width,retweet_count,favorite_count)
+  observe({
+  treedata <-  tmls %>% 
+    group_by(screen_name) %>%
+    sample_n(input$treeobs) %>% 
+    select(screen_name, timing, display_text_width,retweet_count,favorite_count)
     rfTree <- randomForest(as.factor(screen_name) ~ ., data = treedata, mtry = input$vartry, ntree=input$treecount)
-
+  })
+  
+  output$randomforest <- renderPlot({
     plot(rfTree, type="l",main = "Error Rate by Tree Count")
     legend("topright", legend=unique(treedata$screen_name), col=1:4, pch=19)
   })
@@ -169,7 +173,41 @@ server <- function(input, output,session) {
     pre_rfTree <- predict(rfTree, newdata)
     as.character(pre_rfTree)
   })
+  observe({
+    if("select all" %in% input$regression_var)
+      selected_choices=model2_choice[-1]
+    else
+      selected_choices=input$regression_var
+    updateSelectInput(session,"regression_var",selected = selected_choices)  
+  })
+  output$selected <- renderText({
+    paste(input$regression_var, collapse = ",")
+  })
+  # formular of the function
+  output$ex3 <- renderUI({
+    withMathJax(
+      helpText('The Link function is Logit:
+               $$logit(Y=1|X) = {\\beta_0 + \\beta_1Predictor1 + \\beta_2Predictor2 + \\beta_3Predictor3...}\\!$$'))
+  })
+  # regression core
+  output$regression <- renderText({
+    if("select all" %in% input$regression_var)
+      selected_choices=model2_choice[-1]
+    else
+      selected_choices=input$regression_var
+    formular <- as.formula(Media_CNN~[[i]])
+    LR_predictors <- paste(noquote(paste(selected_choices,collapse = "+"))
+    
+    # fit <- glm(Media_CNN~timing+display_text_width+retweet_count+favorite_count,data=tmls,family=binomial())
+    # summary(fit) # display results
+    # confint(fit) # 95% CI for the coefficients
+    # exp(coef(fit)) # exponentiated coefficients
+    # exp(confint(fit)) # 95% CI for exponentiated coefficients
+    # predict(fit, type="response") # predicted values
+    # residuals(fit, type="deviance") # residuals
+    # 
+    # table(predict(fit, type="response") > 0.2,tmls$Media_CNN)
+    # 
+    # predict(fit, newdata, type="response")
+  })
 }
-
-
-            

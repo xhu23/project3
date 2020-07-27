@@ -2,6 +2,8 @@
 library(shinydashboard)
 library(shiny)
 library(plotly)
+model2_choice <- c("select all","timing", "display_text_width","retweet_count","favorite_count")
+
 ui <- dashboardPage(
   skin="red",
   dashboardHeader(title = "Baseball Analysis"),
@@ -133,8 +135,13 @@ ui <- dashboardPage(
               div(HTML("<em><h2>Logistic Regression Model</em>")),
               fluidRow(
                 box(
-                  
-                  
+                  tags$text(h4("Response: If the Media is CNN")),
+                  selectInput("regression_var",h4("Input: Please select Predictor(s)"),choices = model2_choice, multiple = TRUE, selected = "retweet_count"),
+                  tags$text(h4("Predictor Selected:")),
+                  verbatimTextOutput("selected"),
+                  withMathJax(),
+                  uiOutput("ex3"),
+                  textOutput("regression")
                 ),
                 box(
                   
