@@ -1,35 +1,43 @@
+### ST 558 Project 3 ###
+### Author: Xinyu Hu ###
+### Date 7/27/2020   ###
+########################
+
+# Load library
+
 library(rtweet)
-tmls <- get_timelines(c("cnn", "BBCWorld", "cnbc","msnbc"), n = 100)
 library(ggplot2)
 library(shiny)
 library(dplyr)
 library(stringr)
-# library(tidyverse)
 library(plotly)
 library(randomForest)
 library(mathjaxr)
-# calcualte timing of tweet
-tmls["timing_hour"] <- substr(tmls$created_at,12,13)
-tmls["timing_min"] <- substr(tmls$created_at,15,16)
-tmls["timing"] <- apply(tmls,1,function(data){60*as.numeric(data$timing_hour)+as.numeric(data$timing_min)})
-model2_choice <- c("select all","timing", "display_text_width","retweet_count","favorite_count")
-tmls["Media_CNN"] <- ifelse(tmls$screen_name=="CNN",1,0)
+
 # server file
 server <- function(input, output,session) {
+  
+  # Request data from tweeter
+  tmls <- get_timelines(c("cnn", "BBCWorld", "cnbc","msnbc"), n = 100)
+  # Calculate for addtional varaibles
+  tmls["timing_hour"] <- substr(tmls$created_at,12,13)
+  tmls["timing_min"] <- substr(tmls$created_at,15,16)
+  tmls["timing"] <- apply(tmls,1,function(data){60*as.numeric(data$timing_hour)+as.numeric(data$timing_min)})
+  tmls["Media_CNN"] <- ifelse(tmls$screen_name=="CNN",1,0)
+  # define default choice for modeling
+  model2_choice <- c("select all","timing", "display_text_width","retweet_count","favorite_count")
+  
+  # Introduction Page, Box 1
   output$introtext1 <- renderUI({
     str1 <- h2("Data Description")
-    str2 <- h4("The R package rtweet have built-in functionality to scrape data from twitter.
-               As the pandemic still going on around the world, it would be very interesting
-               to understand what's in people's minds about Covid 19. With that, I scrape tweets
-               with hashtag 'Covid_19' to analyze the most recent tweets about Covid 19. This 
-               dataset includes 18,000 most recent original tweets with associated statistics including
-               text, source, length, count of favoriates and retweets, etc.")
-    str3 <- h4("Another interesting direction to look at twitter data is, to look at what tradistional
+    str2 <- h4("The R package rtweet have built-in functionality to scrape data from twitter.")
+    str3 <- h4("One interesting direction to look at twitter data is, to look at what tradistional
                medias are talking about during this Pandemic time. This file includes most recent 3,000
                twettes from each of the media in the list: CNN, BBCWorld, FoxNews, MSNBC. Fields
                includes, similarly, text, length, whether it's a retweet, hashtags, etc.")
     HTML(paste(str1, str2,str3, sep = '<br/>'))
   })
+  # Introduction Page, Box 2
   output$introtext2 <- renderUI({
     str1 <- h2("Analysis Description")
     str2 <- h4("The first step of analysis is to explore the dataset we have. We can look at them by
@@ -48,6 +56,7 @@ server <- function(input, output,session) {
                 subset the dataset based on their interest.")    
     HTML(paste(str1, str2,str3,str4,str5, sep = '<br/>'))
   })
+  # Introduction Page, Box 3
   output$introtext3 <- renderUI({
     str1 <- h2("APP Functionality")
     str2 <- h4("The functionality of this APP was built exactly following the flow of analysis: Starting
@@ -58,6 +67,8 @@ server <- function(input, output,session) {
                section gives users an option to scroll through the data with their desired filters.")
     HTML(paste(str1, str2,sep = '<br/>'))
   })
+  
+  # Data Exploration, Simple Statistics for Numeric Variable
   output$simplestatistics <- renderUI({
     str0 <- h3(paste("Simple Summary Statistics about: ",input$numvarselect))
     str1_1 <- h4("CNN")
@@ -70,12 +81,14 @@ server <- function(input, output,session) {
     str4_2 <- h4(toString(summary(tmls %>% select(input$numvarselect) %>% subset(screen_name="MSNBC"))))
     HTML(paste(str0, str1_1, str1_2, str2_1, str2_2, str3_1, str3_2, str4_1, str4_2, sep = '<br/>'))
    })
+  # Data Exploration, Histogram for Numeric Variable
   output$stats_hist <- renderPlot({
     plot <- tmls %>% ggplot(aes(x=.data[[input$numvarselect]]))
     plot + geom_histogram() +
       xlab(input$numvarselect)+
       facet_wrap(~screen_name)
    })
+  # Data Exploration, bar chart for Numeric Variable
   output$binary_grap <- renderPlot({
     plot <- tmls %>% ggplot(aes(x=.data[[input$binvarselect]]))
     plot + geom_bar( fill="steelblue") +
@@ -84,6 +97,7 @@ server <- function(input, output,session) {
       facet_wrap(~screen_name)
 
   })
+  # Data Exploration, bar chart for character: Source
   output$source_grap <- renderPlot({
     plot <- tmls %>% ggplot(aes(x=.data[[input$charvarselect]]))
     plot + geom_bar(fill="steelblue") +
@@ -92,6 +106,7 @@ server <- function(input, output,session) {
       facet_wrap(~screen_name)
     
   })
+  # Data Exploration, Table for character: text
   output$text_table <- renderTable({
     content <- tmls %>% select(screen_name,text)
     
@@ -100,17 +115,20 @@ server <- function(input, output,session) {
     cnbc_text <-   content %>% subset(screen_name=="CNBC") %>% slice_head(n=20)
     msnbc_text <-   content %>% subset(screen_name=="MSNBC") %>% slice_head(n=20)
     
-    final2 <- rbind(cnn_text,bbc_text,cnbc_text,msnbc_text)
-    final2$text <- paste(substr(final2$text,1,200),"...")
-    final2 
+    final <- rbind(cnn_text,bbc_text,cnbc_text,msnbc_text)
+    final$text <- paste(substr(final$text,1,200),"...")
+    final 
   })
   
+  # Data Exploration, download handler for character: text
   output$downloadData <- downloadHandler(
     filename = "TweetData.csv",
     content = function(file) {
-      write.csv(final2, file)
+      write.csv(final, file)
     }
   )
+  
+  # Numeric Exploration Plot
   output$plotly_plot <- renderPlotly({
     fig <- plot_ly(tmls,
             x = ~.data[[input$x_axis_select]],
@@ -125,20 +143,28 @@ server <- function(input, output,session) {
     
   })
   
-  output$subset_table <- renderTable({
+  # More on data: Reactive Content on subset table
+  subset_result <- reactive({
     subset_result <- tmls %>%filter(source==input$source) %>% filter(screen_name==input$media) %>%
-      filter(is_retweet==input$isretw)%>% 
-      filter(favorite_count>= input$favcount)
+                     filter(is_retweet==input$isretw)%>% 
+                     filter(favorite_count>= input$favcount)
     subset_result <- subset_result[,c(4:7,12:14)]
-    subset_result
   })
   
+  # More on data: visualize Subset table
+  output$subset_table <- renderTable({
+    subset_result()
+  })
+  
+  # More on data: Download handler for subset table
   output$download_media_data <- downloadHandler(
     file = "Subset Media Tweet.csv",
     content = function(file) {
-      write.csv(subset_result, file)
+      write.csv(subset_result(), file)
     }
   )
+  
+  # Cluster Analysis: Plot
   output$cluster_graph <- renderPlot({
     data_clustering <-  tmls %>% 
       group_by(screen_name) %>%
@@ -149,30 +175,46 @@ server <- function(input, output,session) {
       plotresult <- plot(hierClust,xlab="")
       plotresult
   })
+  
+  # Cluster Analysis: Download handler for plot
   output$downloadPlot <- downloadHandler(
     filename = function() { paste("Cluster Download.png") },
     content = function(file) {
       ggsave(file, plot= plotresult, device = "png")
     }
   )
-  observe({
-  treedata <-  tmls %>% 
+  # Random Forest; Subset for Tree data
+  treedata <-  reactive({
+    treedata <- tmls %>% 
     group_by(screen_name) %>%
     sample_n(input$treeobs) %>% 
     select(screen_name, timing, display_text_width,retweet_count,favorite_count)
-    rfTree <- randomForest(as.factor(screen_name) ~ ., data = treedata, mtry = input$vartry, ntree=input$treecount)
+  })
+  # Random Forest: Core Model
+  rfTree <- reactive({
+    rfTree <- randomForest(as.factor(screen_name) ~ ., data = treedata(), mtry = input$vartry, ntree=input$treecount)
   })
   
-  output$randomforest <- renderPlot({
-    plot(rfTree, type="l",main = "Error Rate by Tree Count")
-    legend("topright", legend=unique(treedata$screen_name), col=1:4, pch=19)
+  # Random Forest: summary
+  output$randomforest_summary <- renderPrint({
+    print(rfTree())
   })
+  
+  # Random Forest: Output plot
+  output$randomforest <- renderPlot({
+    plot(rfTree(), type="l",main = "Error Rate by Tree Count")
+    legend("topright", legend=unique(treedata()$screen_name), col=1:4, pch=19)
+  })
+  
+  # Randon Forest: Prediction Output
   output$treepred <- renderUI({
     newdata <- data.frame(timing=input$treepred_timing, display_text_width=input$treepred_length,
                           retweet_count=input$treepred_retweetcount,favorite_count=input$treepred_favocount)
-    pre_rfTree <- predict(rfTree, newdata)
+    pre_rfTree <- predict(rfTree(), newdata)
     as.character(pre_rfTree)
   })
+  
+  # Logistic Regression: update selection
   observe({
     if("select all" %in% input$regression_var)
       selected_choices=model2_choice[-1]
@@ -180,34 +222,56 @@ server <- function(input, output,session) {
       selected_choices=input$regression_var
     updateSelectInput(session,"regression_var",selected = selected_choices)  
   })
+  
+  # Logistic Regression: Variable Selected
   output$selected <- renderText({
     paste(input$regression_var, collapse = ",")
   })
-  # formular of the function
+  
+  # Logistic Regression: General Function
   output$ex3 <- renderUI({
     withMathJax(
-      helpText('The Link function is Logit:
+      helpText('Using "Logit" as link function: 
                $$logit(Y=1|X) = {\\beta_0 + \\beta_1Predictor1 + \\beta_2Predictor2 + \\beta_3Predictor3...}\\!$$'))
   })
-  # regression core
-  output$regression <- renderText({
+  
+  # Logistic Regression: Core Model
+  regresion_fit <- reactive({
     if("select all" %in% input$regression_var)
       selected_choices=model2_choice[-1]
     else
       selected_choices=input$regression_var
-    formular <- as.formula(Media_CNN~[[i]])
-    LR_predictors <- paste(noquote(paste(selected_choices,collapse = "+"))
-    
-    # fit <- glm(Media_CNN~timing+display_text_width+retweet_count+favorite_count,data=tmls,family=binomial())
-    # summary(fit) # display results
-    # confint(fit) # 95% CI for the coefficients
-    # exp(coef(fit)) # exponentiated coefficients
-    # exp(confint(fit)) # 95% CI for exponentiated coefficients
-    # predict(fit, type="response") # predicted values
-    # residuals(fit, type="deviance") # residuals
-    # 
-    # table(predict(fit, type="response") > 0.2,tmls$Media_CNN)
-    # 
-    # predict(fit, newdata, type="response")
+    step1 <- paste(selected_choices,collapse = "+")
+    step2 <- paste("Media_CNN~",step1,collapse = "")
+    user_defined_model <- as.formula(step2)
+    fit <- glm(user_defined_model,data=tmls,family=binomial())
+    fit
+  })
+  
+  # Logistic Regression: Output Summary
+  output$regression <- renderPrint({
+    summary(regresion_fit())
+  })
+  
+  # Logistic Regression: Dynamicly choose threshold
+  output$fitresult <- renderTable({
+    result <- table(as.numeric(predict(regresion_fit(), type="response") > input$threshold_1),tmls$Media_CNN)
+    result <- as.data.frame(result)
+    colnames(result) <- c("Predicted Result (CNN=1, Not CNN=2)","Reality Result (CNN=1, Not CNN=2)","Count of Observations")
+    result
+  })
+  
+  # Logistic Regression: Input data for prediction
+  newdata2 <- reactive({
+    newdata2 <- data.frame(timing=input$logitpred_timing, display_text_width=input$logitpred_display_text_width,
+                           retweet_count=input$logitpred_retweet_count,favorite_count=input$logitpred_favorite_count)
+  })
+  # Logistic Regression: Show Input data for prediction
+  output$valueinput <- renderTable({
+    newdata2()
+  })
+  # # Logistic Regression: Prediction likelihood
+  output$logitpred <- renderText({
+    predict(regresion_fit(), newdata2(),type="response")
   })
 }

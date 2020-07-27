@@ -1,25 +1,36 @@
+### ST 558 Project 3 ###
+### Author: Xinyu Hu ###
+### Date 7/27/2020   ###
+########################
 
+# Load library
 library(shinydashboard)
 library(shiny)
 library(plotly)
-model2_choice <- c("select all","timing", "display_text_width","retweet_count","favorite_count")
 
 ui <- dashboardPage(
   skin="red",
-  dashboardHeader(title = "Baseball Analysis"),
+  # assign dashboad header
+  dashboardHeader(title = "Media Tweet Analysis"),
+  
+  # Set dashboard side bar
   dashboardSidebar(
     sidebarMenu(
       menuItem("Introduction", tabName = "intro", icon = icon("dashboard")),
       menuItem("Data Exploration", tabName = "explore", icon = icon("table")),
       menuItem("Numeric Exploration", tabName = "explore_num", icon = icon("table")),
-      menuItem("PCA Analysis", tabName = "pca", icon = icon("bar-chart-o")),
+      menuItem("Cluster Analysis", tabName = "cluster", icon = icon("bar-chart-o")),
       menuItem("Random Forest", tabName = "model1", icon = icon("bar-chart-o")),
       menuItem("Logsitic Regression", tabName = "model2", icon = icon("bar-chart-o")),
       menuItem("More On Data", tabName = "data", icon = icon("list-alt"))
     )
   ),
+  
+  # Set the body of dashboard
   dashboardBody(
+    
     tabItems(
+      # The introduction page
       tabItem(tabName = "intro", 
               div(HTML("<em><h2> Introduction</em>")),
               fluidRow(
@@ -38,11 +49,12 @@ ui <- dashboardPage(
                 )
               )
       ),
+      # general exploration page
       tabItem(tabName = "explore",
               div(HTML("<em><h2> Data Exploration</em>")),
               fluidRow(
                 box(
-                  # selectInput("mediapick","Select Source Media", c(CNN="cnn", BBC="BBCWorld", FOX="foxnews",MSNBC="msnbc",All="all")),
+                  # select of variable type will change the available selection below
                   selectInput("vartype", "Please Select Variable Type of Interest",
                               c(Numeric = "num", Binary = "bin",Character="char")),
                   conditionalPanel(
@@ -88,6 +100,7 @@ ui <- dashboardPage(
                 )
               
       ),
+      # The numeric exploration page
       tabItem(tabName = "explore_num",
               div(HTML("<em><h2>Numeric Exploration</em>")),
               box(
@@ -97,9 +110,9 @@ ui <- dashboardPage(
                 plotlyOutput("plotly_plot")
               )
       ), 
-        
-      tabItem(tabName = "pca",
-              div(HTML("<em><h2> PCA Analysis</em>")),
+      # The cluster analysis page
+      tabItem(tabName = "cluster",
+              div(HTML("<em><h2> Cluster Analysis</em>")),
               box(
                 selectInput("agglo", h3("Select Agglomeration Method"),c("ward.D", "ward.D2", "single", "complete", "average","mcquitty", "median", "centroid")),
                 numericInput("obs", h3("Number of Tweets (each Media) for Clustering"), min = 1,max = 100, value = 20),
@@ -108,6 +121,7 @@ ui <- dashboardPage(
               )
         
       ),
+      # Random Forest Page
       tabItem(tabName = "model1",
               div(HTML("<em><h2>Random Forest Model</em>")),
               fluidRow(
@@ -118,36 +132,53 @@ ui <- dashboardPage(
                          numericInput("treecount", h4("Select Number of Trees to Grow"), min = 1,max = 200, value = 5),
                          numericInput("vartry", h4("Select Number of Variables randomly tried at each node"), min = 1,max = 4, value = 1),
                          numericInput("treeobs", h4("Number of Tweets (each Media) for Random Forest"), min = 1,max = 200, value = 10),
+                         verbatimTextOutput("randomforest_summary"),
                          plotOutput("randomforest")
                        ),
                        box(
                          tags$text(h3("Dynamic Prediction")),
                          numericInput("treepred_timing",h4("Input: Timing of the day (minutes)"), min=1, max=60*24, value=480),
                          numericInput("treepred_length",h4("Input: Tweet Character Count"),min=1,max=400, value=120),
-                         numericInput("treepred_retweetcount",h4("Input: Retweet Count"),min=1,max=400, value=120),
-                         numericInput("treepred_favocount",h4("Input: Favorite Count"),min=1,max=400, value=120),
+                         numericInput("treepred_retweetcount",h4("Input: Retweet Count"),min=1,max=30000, value=120),
+                         numericInput("treepred_favocount",h4("Input: Favorite Count"),min=1,max=30000, value=120),
                          tags$text(h4("Output: Most likely Media:")),
                          uiOutput("treepred")
                        )
               )
       ),
+      # Logistic Regression Page
       tabItem(tabName = "model2",
               div(HTML("<em><h2>Logistic Regression Model</em>")),
               fluidRow(
                 box(
+                  tags$text(h3("Model Training")),
+                  tags$text(h4("Model Design (MathJax Format)")),
+                  uiOutput("ex3"),
                   tags$text(h4("Response: If the Media is CNN")),
                   selectInput("regression_var",h4("Input: Please select Predictor(s)"),choices = model2_choice, multiple = TRUE, selected = "retweet_count"),
                   tags$text(h4("Predictor Selected:")),
                   verbatimTextOutput("selected"),
                   withMathJax(),
-                  uiOutput("ex3"),
-                  textOutput("regression")
+                  tags$text(h4("Model Summary:")),
+                  verbatimTextOutput("regression"),
+                  numericInput("threshold_1",h4("Please Select Likelihood Threshold:"),min=0,max=1, value=0.3,step = 0.05),
+                  tableOutput("fitresult")
                 ),
                 box(
-                  
+                  tags$text(h3("New Data Fit")),
+                  tags$text(h3("Please input values for trained predictor(s) ONLY")),
+                  numericInput("logitpred_timing",h4("Input: Timing of the day (minutes)"), min=1, max=60*24, value=100,step=60),
+                  numericInput("logitpred_display_text_width",h4("Input: Tweet Character Count"),min=1,max=400, value=100,step=50),
+                  numericInput("logitpred_retweet_count",h4("Input: Retweet Count"),min=1,max=30000, value=100,step=100),
+                  numericInput("logitpred_favorite_count",h4("Input: Favorite Count"),min=1,max=30000, value=100,step=100),
+                  tags$text(h3("Input Summary: (variables not in model training will be ignored)")),
+                  tableOutput("valueinput"),
+                  tags$text(h3("Likelihood of Being a CNN Tweet:")),
+                  textOutput("logitpred")
                 )
               )
       ),
+      # More on data page
       tabItem(tabName = "data",
               div(HTML("<em><h2>More On Data</em>")),
               fluidRow(
