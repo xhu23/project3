@@ -8,6 +8,7 @@ library(shinydashboard)
 library(shiny)
 library(plotly)
 
+# create UI
 ui <- dashboardPage(
   # define default choice for modeling
   skin="red",
