@@ -33,7 +33,7 @@ ui <- dashboardPage(
     tabItems(
       # The introduction page
       tabItem(tabName = "intro", 
-              div(HTML("<em><h2> Introduction</em>")),
+              div(HTML("<em><h2> Introduction (Please wait 10 sec for data loading)</em>")),
               fluidRow(
                 column(12,
                 box(htmlOutput("introtext1"),background = "maroon",
